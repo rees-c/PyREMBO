@@ -14,7 +14,7 @@ from utils import global_optimization, synth_obj_func, get_fitted_model
 
 class REMBO():
     """
-    Minimize a black-box objective function.
+    Maximize a black-box objective function.
     """
     #TODO: implement functionality for discrete variables,
     # implement acquisition functions
@@ -94,7 +94,7 @@ class REMBO():
                                        self.d_embedding - self.n_keep_dims))
 
         self.X = []  # running list of data
-        self.X_embedded = torch.Tensor() # running list of embedded data
+        self.X_embedded = torch.Tensor()  # running list of embedded data
         self.y = torch.Tensor()  # running list of function evaluations
 
         self.model = None
@@ -109,10 +109,11 @@ class REMBO():
 
         # Compute boundaries on embedded space
         embedding_boundaries = self._compute_boundaries_embedding(
-            self.original_boundaries).T
+            self.original_boundaries)
         # embedding_boundaries = np.array(
         #     [[-np.sqrt(self.d_embedding),
         #       np.sqrt(self.d_embedding)]] * self.d_embedding).T
+        print(embedding_boundaries)
 
         # TODO: Make the random initialization its own function so it can be done separately from the acquisition argmin
         # Initialize with random points
@@ -128,10 +129,14 @@ class REMBO():
                 + embedding_boundaries[:, 0]
             X_query_embedded = torch.from_numpy(X_query_embedded).unsqueeze(0)
 
+            print("X_query_embedded.shape: {}".format(X_query_embedded.shape))
+
         # Query by maximizing the acquisition function
         else:
             print('querying')
 
+            print("self.X_embedded.shape: {}".format(self.X_embedded.shape))
+            print("self.y.shape: {}".format(self.y.shape))
             # Initialize model
             if len(self.X) == self.initial_random_samples:
                 self.model = ExactGaussianProcess(
@@ -149,6 +154,7 @@ class REMBO():
                 beta=2.0,
             )
 
+            print("batch_size: {}".format(batch_size))
             # Optimize for a (batch_size x d_embedding) tensor query point
             X_query_embedded = global_optimization(
                 objective_function=qEI,
@@ -306,7 +312,14 @@ class REMBO():
         return -black_box_function(x_query)
 
     def _compute_boundaries_embedding(self, boundaries):
-        """ Approximate box constraint boundaries on low-dimensional manifold"""
+        """ Approximate box constraint boundaries on low-dimensional manifold
+
+            Args:
+                boundaries ((d_orig, 2) np.array):
+            Returns:
+                boundaries_embedded ((d_embedding, 2) np.narray):
+
+        """
         # Check if boundaries have been determined before
         boundaries_hash = hash(boundaries[self.n_keep_dims:].tostring())
         if boundaries_hash in self.boundaries_cache:
@@ -339,8 +352,7 @@ class REMBO():
                 x = self._manifold_to_dataspace(x_embedded)
                 if np.sum(np.logical_or(
                         x[self.n_keep_dims:] < boundaries[self.n_keep_dims:, 0],
-                        x[self.n_keep_dims:] > boundaries[self.n_keep_dims:,
-                                               1])) \
+                        x[self.n_keep_dims:] > boundaries[self.n_keep_dims:, 1])) \
                         > (self.d_orig - self.n_keep_dims) / 2:
                     break
                 x_embedded[dim] += 0.01

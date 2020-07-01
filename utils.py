@@ -28,6 +28,10 @@ def global_optimization(objective_function, boundaries, batch_size):
     # # USING BOTORCH
     from botorch.optim import optimize_acqf
 
+    # Boundaries must be (2 x d) for optimize_acqf to work
+    if boundaries.shape[0] != 2:
+        boundaries = boundaries.T
+
     # optimize
     candidates, _ = optimize_acqf(
         acq_function=objective_function,
