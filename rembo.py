@@ -176,9 +176,6 @@ class REMBO():
             print("batched X_query_embedded: {}".format(X_query_embedded))
             print("batched X_query_embedded.shape: {}".format(X_query_embedded.shape))
 
-        # Append to (n x d_embedding) Tensor
-        self.X_embedded = torch.cat([self.X_embedded.float(),
-                                     X_query_embedded.float()], dim=0)
         # self.X_embedded.append(X_query_embedded)
         print("X_embedded concatenated: {}".format(self.X_embedded.shape))
 
@@ -187,7 +184,7 @@ class REMBO():
                           a_min=self.original_boundaries[:, 0],
                           a_max=self.original_boundaries[:, 1])
 
-        return X_query
+        return X_query, X_query_embedded
 
     def _manifold_to_dataspace(self, X_embedded):
         """
@@ -215,7 +212,7 @@ class REMBO():
         # print("X_query unscaled: {}".format(X_query))
         return X_query
 
-    def update(self, X_query, y_query):
+    def update(self, X_query, y_query, X_query_embedded):
         """ Update internal model for observed (X, y) from true function.
         The function is meant to be used as follows.
             1. Call 'select_query_point' to update self.X_embedded with a new
@@ -225,8 +222,13 @@ class REMBO():
             3. Call this function ('update') to update the surrogate model (e.g.
                 Gaussian Process)
 
-        :param X_query: np.array (q x d)
-        :param y_query: float
+        Args:
+            X_query ((1,d_orig) np.array):
+                Point in original input space to query
+            y_query (float):
+                Value of black-box function evaluated at X_query
+            X_query_embedded ((1, d_embedding) np.array):
+                Point in embedding space which maps 1:1 with X_query
         """
         print("X_query.shape: {}".format(X_query.shape))
         print("y_query.shape: {}".format(y_query.shape))
@@ -235,6 +237,13 @@ class REMBO():
         self.X.append(X_query)
         self.y = torch.cat([self.y, torch.Tensor([[y_query]])], axis=0)
 
+        # Append to (n x d_embedding) Tensor
+        self.X_embedded = torch.cat([self.X_embedded.float(),
+                                     X_query_embedded.float()],
+                                    dim=0)
+
+        print("self.X_embedded.shape: {}".format(self.X_embedded.shape))
+        print("self.y.shape: {}".format(self.y.shape))
         self.model = get_fitted_model(self.X_embedded.float(),
                                       self.y.float())
 
