@@ -38,7 +38,7 @@ def global_optimization(objective_function, boundaries, batch_size):
         bounds=boundaries,
         q=batch_size,
         num_restarts=10,  # number of initial points for optimization
-        raw_samples=512,  # used for intialization heuristic
+        raw_samples=512,  # used for initialization heuristic
         return_best_only=True  # only returns the best of the n_restarts random restarts
     )
     # what exactly is raw_samples?

@@ -2,6 +2,7 @@ import numpy as np
 
 from rembo import REMBO
 
+
 def main():
     n_dims = 20
     d_embedding = 3
@@ -21,9 +22,13 @@ def main():
 
     # Perform optimization
     for i in range(n_trials):
-        X_query = opt.select_query_point()
-        y_query = -f(X_query)
-        opt.update(X_query, y_query)
+        X_query = opt.select_query_point(batch_size=1)
+
+        for row in X_query:
+            row = np.expand_dims(row, axis=0)
+            y_query = -f(row)
+            opt.update(row, y_query)
+
         print("best y value: {}".format(opt.best_value()))
         print("best actual x values: {}".format(opt.best_params()[0][ind[:2]]))
         print("best actual x values distance from 0: {}".format(
