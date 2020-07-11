@@ -34,26 +34,9 @@ class ExactGaussianProcess(SingleTaskGP):
                          likelihood=likelihood,
                          covar_module=covar_module)
 
-    # def forward(self, x):
-    #     """
-    #
-    #     :param x: (n x d)
-    #     :return fpreds (object): fpreds has the following attributes.
-    #         f_mean = f_preds.mean (prediction)
-    #         f_var = f_preds.variance (prediction uncertainty)
-    #         f_covar = f_preds.covariance_matrix
-    #         f_samples = f_preds.sample(sample_shape=torch.Size(1000,))
-    #     """
-    #     # gets called through subsubsubclass' __call__ method
-    #
-    #     mean_x = self.mean_module(x)
-    #     covar_x = self.covar_module(x)
-    #     fpreds = gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-    #     return fpreds
-
     def fit(self, train_x_, train_y_):
         """
-        Fit the Gaussian Process to training data using the Adam optimizer on
+        Fit the Gaussian Process to training data on
         the marginal log likelihood. (refits the model hyperparameters)
 
         Code based on the following GPyTorch tutorial:
@@ -61,8 +44,8 @@ class ExactGaussianProcess(SingleTaskGP):
 
         :param train_x_: torch.Tensor (n, d)
         :param train_y_: torch.Tensor (n, 1)
-        :return:
         """
+
         train_X = train_x_.float()
         train_Y = train_y_.float()
 
@@ -74,16 +57,6 @@ class ExactGaussianProcess(SingleTaskGP):
         mll = mll.to(train_X)
 
         fit_gpytorch_model(mll)
-        # self.train()
-        #
-        # optimizer = torch.optim.Adam([{'params': self.parameters()}], lr=0.1)
-        # for epoch in range(150):
-        #     optimizer.zero_grad()
-        #     output = self(train_X)
-        #     loss = -mll(output, self.train_targets)
-        #     print("loss: {}".format(loss))
-        #     loss.backward()
-        #     optimizer.step()
 
     def set_train_data(self, inputs=None, targets=None, strict=True):
         """
@@ -120,19 +93,3 @@ class ExactGaussianProcess(SingleTaskGP):
                         msg = msg.format(attr=attr, e_attr=expected_attr, f_attr=found_attr)
                         raise RuntimeError(msg)
             self.train_targets = targets
-# # BoTorch
-# def _get_and_fit_model(Xs, Ys, **kwargs):
-#     train_X, train_Y = Xs[0], Ys[0]
-#     model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-#     mll = ExactMarginalLogLikelihood(model.likelihood, model).to(train_X)
-#     model.train()
-#
-#     optimizer = SGD([{'params': model.parameters()}], lr=kwargs.get("lr"))
-#     for epoch in range(kwargs.get("epochs")):
-#         optimizer.zero_grad()
-#         output = model(train_X)
-#         loss = -mll(output, model.train_targets)
-#         loss.backward()
-#         optimizer.step()
-#
-#     return model

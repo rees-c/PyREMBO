@@ -5,10 +5,11 @@ from rembo import REMBO
 
 def main():
     n_dims = 20
-    d_embedding = 3
+    d_embedding = 4
     n_trials = 30
+
     ind = np.random.RandomState(seed=0).choice(n_dims, 2, replace=False)
-    def f(X):  # target function
+    def f(X):  # black-box objective function to minimize
         """
         minimum value of 0
         """
@@ -37,8 +38,7 @@ def main():
 
     # Perform optimization
     for i in range(n_trials):
-        X_queries, X_queries_embedded = opt.select_query_point(batch_size=1)
-
+        X_queries, X_queries_embedded = opt.select_query_point(batch_size=3)
 
         # Ensure not 1D (i.e. size (D,))
         X_queries = ensure_not_1D(X_queries)
@@ -48,7 +48,7 @@ def main():
             X_query = X_queries[row_idx]
             X_query_embedded = X_queries_embedded[row_idx]
 
-            # Ensure not 1D (i.e. size (D,))
+            # Ensure no 1D tensors (i.e. expand tensors of size (D,))
             X_query = ensure_not_1D(X_query)
             X_query_embedded = ensure_not_1D(X_query_embedded)
 
@@ -60,16 +60,6 @@ def main():
         print("best actual x values distance from 0: {}".format(
             np.linalg.norm(opt.best_params()[0][ind[:2]])))
         print("---------------------")
-
-    # print("X_embedded: {}".format(opt.X_embedded))
-    # print("y: {}".format(opt.y))
-    import torch
-    # xtry = torch.Tensor([-1.4142,  1.4142])
-    # xtry = torch.Tensor([0,  0])
-    # opt.model.eval()
-    # fpreds = opt.model.forward(xtry)
-    # print(fpreds.mean)
-    # print(fpreds.covariance_matrix)
 
 
 if __name__ == "__main__":

@@ -117,10 +117,11 @@ class REMBO():
 
         # Produces (d_embedding, 2) array
         if self.embedding_boundaries_setting == "auto":
-            # Compute boundaries on embedded space
+            # Approximately compute boundaries on embedded space
             embedding_boundaries = self._compute_boundaries_embedding(
                 self.original_boundaries)
         elif self.embedding_boundaries_setting == "constant":
+            # As described in the original paper. This is default.
             embedding_boundaries = np.array(
                 [[-np.sqrt(self.d_embedding),
                   np.sqrt(self.d_embedding)]] * self.d_embedding)
@@ -160,12 +161,13 @@ class REMBO():
                 model=self.model,
                 best_f=torch.max(self.y).item(),
             )
-            qUCB = qUpperConfidenceBound(
-                model=self.model,
-                beta=2.0,
-            )
+            # qUCB = qUpperConfidenceBound(
+            #     model=self.model,
+            #     beta=2.0,
+            # )
 
             print("batch_size: {}".format(batch_size))
+
             # Optimize for a (batch_size x d_embedding) tensor query point
             X_query_embedded = global_optimization(
                 objective_function=qEI,
@@ -176,7 +178,6 @@ class REMBO():
             print("batched X_query_embedded: {}".format(X_query_embedded))
             print("batched X_query_embedded.shape: {}".format(X_query_embedded.shape))
 
-        # self.X_embedded.append(X_query_embedded)
         print("X_embedded concatenated: {}".format(self.X_embedded.shape))
 
         # Map to higher dimensional space and clip to hard boundaries [-1, 1]
@@ -206,10 +207,7 @@ class REMBO():
         else:
             X_query = X_query_kd
 
-        # print("X_query scaled: {}".format(X_query))
-        # scale 'X_query' to the original dataspace (from [-1, 1]^D)
         X_query = self._unscale(X_query)
-        # print("X_query unscaled: {}".format(X_query))
         return X_query
 
     def update(self, X_query, y_query, X_query_embedded):
@@ -247,21 +245,6 @@ class REMBO():
         self.model = get_fitted_model(self.X_embedded.float(),
                                       self.y.float())
 
-
-        # if len(self.X) > self.initial_random_samples:
-        #     self.model.fit(self.X_embedded.float(), self.y.float())
-
-        # # # BoTorch:
-        # # Initialize model
-        # mll_ei, model_ei = initialize_model(
-        #     train_x_ei,
-        #     train_obj_ei,
-        #     train_con_ei,
-        #     model_ei.state_dict(),
-        # )
-        # # Fit model
-        # fit_gpytorch_model(mll_ei)
-
     def best_params(self):
         """ Returns the best parameters found so far."""
         return self.X[np.argmax(self.y.numpy())]
@@ -269,34 +252,6 @@ class REMBO():
     def best_value(self):
         """ Returns the optimal value found so far."""
         return np.max(self.y.numpy())
-
-
-########################
-    def _rescale(self, x,
-                 scaled_lower_bound=-1, scaled_upper_bound=1):
-        """
-        TODO: This function is unnecessary
-        Transforms original input space to the space
-            [new_lower_bound, new_upper_bound].
-
-        Args:
-            x (np.array (N, D)): Input points in original space
-            scaled_lower_bound (int): New lower bound to linearly map x to.
-            scaled_upper_bound (int): New upper bound to linearly map x to.
-        Returns:
-            np.array (N, D): Input points in [new_lower_bound, new_upper_bound]
-                space
-        """
-        x_scaled = np.empty(x.shape)
-        orig_ranges = self.original_boundaries[:][1] \
-                      - self.original_boundaries[:][0]  # (D x 1) max-min
-        new_range = scaled_upper_bound - scaled_lower_bound
-
-        for dim in range(len(x)):
-            x_scaled[:][dim] = (x[:][dim] - self.original_boundaries[dim][0]) \
-                               * (new_range / orig_ranges[dim]) \
-                               + scaled_lower_bound
-        return x_scaled
 
     def _unscale(self, x_scaled,
                  scaled_lower_bound=-1, scaled_upper_bound=1):
@@ -388,4 +343,3 @@ class REMBO():
         self.boundaries_cache[boundaries_hash] = boundaries_embedded
 
         return boundaries_embedded
-
