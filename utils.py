@@ -73,3 +73,61 @@ def get_fitted_model(train_x, train_obj, state_dict=None):
     fit_gpytorch_model(mll)
 
     return model
+
+
+class dict_to_tensor_IO():
+    """
+    Map back and forth between dictionary data and tensor data.
+
+    Args:
+        dict_data (dict)
+            State point described with a key-value pairs.
+    Returns:
+        tensor_state_point ((1, d) torch.Tensor)
+            A tensor version of dict_data, where 'd' is the number of
+            keys/parameters/features/dimensions.
+
+    """
+
+    def __init__(self, dict_data=None):
+        self.column_indexes_to_keys = {}
+
+        # Create the mapping as a dictionary of column_index:key pairs
+        if dict_data is not None:
+            for index, (key, value) in enumerate(dict_data.items()):
+                self.column_indexes_to_keys[index] = key
+        else:
+            raise AttributeError('A state point dictionary was not passed.')
+
+    def map_dict_state_point_to_tensor(self, dict_data=None):
+        """
+        Convert state point 'dict_data' into a (1, d) tensor using the map,
+        'column_indexes_to_keys', and then return the tensor.
+        """
+        if dict_data is not None:
+            tensor_state_point = torch.Tensor()  # will make this (1, d)
+            for index, key in self.column_indexes_to_keys.items():
+                value = torch.Tensor([[dict_data[key]]])
+                tensor_state_point = torch.cat([tensor_state_point, value],
+                                               dim=1)
+            return tensor_state_point
+        else:
+            raise AttributeError('A state point dictionary was not passed.')
+
+    def map_tensor_state_point_to_dict(self, tensor_state_point=None):
+        """
+        Convert (1, d) state point 'tensor_data' into a dict using the map,
+        'column_indexes_to_keys', and then return the dict.
+        """
+        dict_state_point = {}
+        if (tensor_state_point is not None) or \
+                tensor_state_point.shape[0] != 1 or \
+                tensor_state_point.ndim != 2:
+
+            for index, key in self.column_indexes_to_keys.items():
+                value = tensor_state_point[0][index]
+                dict_state_point[key] = float(value)
+
+            return dict_state_point
+        else:
+            raise AttributeError('A (1,d) state point tensor was not passed.')

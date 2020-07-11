@@ -19,7 +19,7 @@ def main():
 
     def ensure_not_1D(x):
         """
-        Ensure x is not 1D (i.e. size (D,))
+        Ensure x is not 1D (i.e. make size (D,) data into size (1,D))
         :param x: torch.Tensor
         :return:
         """
