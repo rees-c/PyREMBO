@@ -6,10 +6,6 @@ from botorch.models import SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from botorch import fit_gpytorch_model
 
-def synth_obj_func(x):
-    # Example synthetic objective function
-    return x ** 4 + 2 * x ** 3 - 12 * x ** 2 - 2 * x + 6
-
 
 def global_optimization(objective_function, boundaries, batch_size):
     """
@@ -47,6 +43,7 @@ def global_optimization(objective_function, boundaries, batch_size):
     new_x = candidates.detach()
     return new_x
 
+
 class ExactGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
         super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
@@ -57,6 +54,7 @@ class ExactGPModel(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 
 def get_fitted_model(train_x, train_obj, state_dict=None):
     # initialize and fit model
@@ -74,46 +72,4 @@ def get_fitted_model(train_x, train_obj, state_dict=None):
     mll.to(train_x)
     fit_gpytorch_model(mll)
 
-
-    # # ---------------- manual optimization ----------------
-    # training_iter = 50
-    # # Use the adam optimizer
-    # optimizer = torch.optim.Adam([
-    #     {'params': model.parameters()},
-    #     # Includes GaussianLikelihood parameters
-    # ], lr=0.1)
-    # for i in range(training_iter):
-    #     # Zero gradients from previous iteration
-    #     optimizer.zero_grad()
-    #     # Output from model
-    #     output = model(train_x)
-    #     # Calc loss and backprop gradients
-    #     loss = -mll(output, train_obj)
-    #     loss.backward()
-    #     # print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
-    #     #     i + 1, training_iter, loss.item(),
-    #     #     model.covar_module.base_kernel.lengthscale.item(),
-    #     #     model.likelihood.noise.item()
-    #     # ))
-    #     optimizer.step()
-
-
     return model
-
-
-
-
-
-    # # MORE MANUAL METHOD...
-    # if optimizer == "random+GD":
-    #     for i in range(maxf):
-    #         x_trial = random.uniform(size=boundaries.shape[0]) \
-    #             * (boundaries[:, 1] - boundaries[:, 0]) \
-    #             + boundaries[:, 0]
-    #         f_trial = objective_function(x_trial)
-    #
-    #         # TODO: NEED OBJECTIVE FUNCTION GRADIENT
-    #
-    #         if f_trial < f_min:
-    #             x_opt = x_trial
-    #             f_min = f_trial

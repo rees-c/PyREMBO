@@ -10,7 +10,7 @@ from botorch import fit_gpytorch_model
 from scipy.optimize import fmin_l_bfgs_b
 from botorch.acquisition.objective import ConstrainedMCObjective
 
-from utils import global_optimization, synth_obj_func, get_fitted_model
+from utils import global_optimization, get_fitted_model
 
 class REMBO():
     """
@@ -282,7 +282,7 @@ class REMBO():
                                + self.original_boundaries[dim][0]
         return x_unscaled
 
-    def evaluate_f(self, x_query, black_box_function=synth_obj_func):
+    def evaluate_f(self, x_query, black_box_function=None):
         """
         Evaluates input point in embedded space by first projecting back to
         original space and then scaling it to its original boundaries.
@@ -291,7 +291,8 @@ class REMBO():
         :return:
         """
         # BoTorch assumes a maximization problem
-        return -black_box_function(x_query)
+        if black_box_function is not None:
+            return -black_box_function(x_query)
 
     def _compute_boundaries_embedding(self, boundaries):
         """ Approximate box constraint boundaries on low-dimensional manifold

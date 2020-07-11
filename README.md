@@ -15,6 +15,7 @@ on Artificial Intelligence (IJCAI)
 
 Work in progress:
 -
+- Implement interleaved REMBO
 - Allow for initial data
 - Use 'gpytorch.likelihoods.FixedNoiseGaussianLikelihood' to add a fixed,
 known observation noise to the GP predictions
